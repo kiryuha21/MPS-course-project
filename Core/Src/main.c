@@ -21,9 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "fonts.h"
-#include "ST7735.h"
-#include <stdio.h>
+#include "state.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,32 +42,25 @@
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
 
-/* USER CODE BEGIN PV */
+UART_HandleTypeDef huart1;
 
+/* USER CODE BEGIN PV */
+state_info_t* state_info = NULL;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+void get_uart_input();
+bool is_checksum_end();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-char* algorithms[] = {
-		"algo1",
-		"algo2"
-};
 
-int current_algo = 0;
-void print_current_algo() {
-	char buffer[100] = {'\0'};
-	sprintf(buffer, "Current algorithm: %s", algorithms[current_algo]);
-	format_buffer(buffer, 11);
-	ST7735_DrawString(0, 0, buffer, Font_11x18,ST7735_BLACK, ST7735_WHITE);
-}
 /* USER CODE END 0 */
 
 /**
@@ -101,6 +92,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   ST7735_Init();
   ST7735_Backlight_On();
@@ -109,13 +101,24 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  // HAL_UART_Transmit(&huart1, &text[0], strlen(text), 100);
+
+  // uint8_t uart_buffer[2];
+  // HAL_UART_Receive_IT(&huart1, uart_buffer, 2);
+
+  state_info = new_state_info();
+  set_state(state_info, ENTER_SUM);
+
   while (1)
   {
-	  print_current_algo();
+	  get_uart_input();
+	  reduce_state_to_constant_output(state_info);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+  free(state_info);
   /* USER CODE END 3 */
 }
 
@@ -194,6 +197,39 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -219,21 +255,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NEXT_ALGO_BUTTON_Pin PREV_ALGO_BUTTON_Pin */
-  GPIO_InitStruct.Pin = NEXT_ALGO_BUTTON_Pin|PREV_ALGO_BUTTON_Pin;
+  /*Configure GPIO pins : NEXT_ALGO_BUTTON_Pin PREV_ALGO_BUTTON_Pin EXECUTE_BUTTON_Pin */
+  GPIO_InitStruct.Pin = NEXT_ALGO_BUTTON_Pin|PREV_ALGO_BUTTON_Pin|EXECUTE_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : EXECUTE_BUTTON_Pin */
-  GPIO_InitStruct.Pin = EXECUTE_BUTTON_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(EXECUTE_BUTTON_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -244,16 +274,64 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	switch (GPIO_Pin) {
 	case NEXT_ALGO_BUTTON_Pin:
-		current_algo = 1;
+		set_next_algo(state_info);
 		break;
 	case PREV_ALGO_BUTTON_Pin:
-		current_algo = 0;
+		set_prev_algo(state_info);
 		break;
 	case EXECUTE_BUTTON_Pin:
-		current_algo = 1;
+		set_state(state_info, EXECUTE);
 		break;
 	default:
 		break;
+	}
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	if (state_info->current_state == ENTER_SUM) {
+		if (is_checksum_end()) {
+			HAL_UART_AbortReceive(&huart1);
+			HAL_UART_Transmit_IT(&huart1, CHOOSE_ALGO_MSG, strlen(CHOOSE_ALGO_MSG));
+		}
+	} else if (state_info->current_state == CHOOSE_ALGO) {
+		if (strcmp(state_info->uart_buffer, "NEXT\r") == 0) {
+			set_next_algo(state_info);
+		} else if (strcmp(state_info->uart_buffer, "PREV\r") == 0) {
+			set_prev_algo(state_info);
+		}
+		HAL_UART_Transmit_IT(&huart1, CHOOSE_ALGO_MSG, strlen(CHOOSE_ALGO_MSG));
+	}
+}
+
+bool is_checksum_end() {
+	uint8_t byte = state_info->uart_buffer[state_info->uart_write_ptr];
+
+	if (byte != '\r') {
+		state_info->uart_write_ptr += 1;
+		return false;
+	}
+
+	strcpy(state_info->reference_checksum, state_info->uart_buffer);
+	clear_buffer(state_info->uart_buffer);
+	state_info->uart_write_ptr = 0;
+	set_state(state_info, CHOOSE_ALGO);
+
+	return true;
+}
+
+void read_next_byte() {
+	HAL_UART_Receive_IT(&huart1, state_info->uart_buffer + state_info->uart_write_ptr, 1);
+}
+
+void read_algorithm_shift() {
+	HAL_UART_Receive_IT(&huart1, state_info->uart_buffer, SHIFT_WORD_SIZE);
+}
+
+void get_uart_input() {
+	if (state_info->current_state == ENTER_SUM) {
+		read_next_byte();
+	} else if (state_info->current_state == CHOOSE_ALGO) {
+		read_algorithm_shift();
 	}
 }
 /* USER CODE END 4 */

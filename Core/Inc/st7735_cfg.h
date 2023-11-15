@@ -1,8 +1,3 @@
-/*
- * st7735_cfg.h
- *
- */
-
 #ifndef ST7735_CFG_H_
 #define ST7735_CFG_H_
 

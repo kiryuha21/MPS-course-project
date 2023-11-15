@@ -400,24 +400,3 @@ int16_t ST7735_GetWidth(void)
 {
   return _width;
 }
-
-void format_buffer(char* buffer, size_t line_width) {
-	char res[100] = {'\0'};
-
-	size_t shift = 0;
-	size_t len = strlen(buffer);
-	for (size_t i = 0; i < len; ++i) {
-		if (buffer[i] != ' ') {
-			res[i + shift] = buffer[i];
-			continue;
-		}
-
-		size_t spaces_amount = line_width - ((i + shift) % line_width);
-		for (size_t j = 0; j < spaces_amount; ++j) {
-			res[i + j + shift] = ' ';
-		}
-		shift += spaces_amount - 1;
-	}
-
-	strcpy(buffer, res);
-}

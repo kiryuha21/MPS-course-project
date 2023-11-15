@@ -1,8 +1,3 @@
-/*
- * ST7735.h
- *
- */
-
 #ifndef ST7735_H_
 #define ST7735_H_
 
@@ -131,7 +126,6 @@ void ST7735_SetRotation();
 uint8_t ST7735_GetRotation(void);
 int16_t ST7735_GetHeight(void);
 int16_t ST7735_GetWidth(void);
-void format_buffer(char* buffer, size_t line_width);
 
 
 #endif /* ST7735_H_ */
