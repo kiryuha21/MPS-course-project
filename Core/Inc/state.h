@@ -9,6 +9,8 @@
 #include "fonts.h"
 #include "ST7735.h"
 
+extern UART_HandleTypeDef huart2;
+
 typedef enum STATE {
 	IDLE,
 	ENTER_SUM,
@@ -39,8 +41,10 @@ state_info_t* new_state_info();
 void set_state(state_info_t* state_info, STATE new_state);
 void set_next_algo(state_info_t* state_info);
 void set_prev_algo(state_info_t* state_info);
+
 void reduce_state_to_constant_output(state_info_t* state_info);
 void reduce_state_change_to_action(state_info_t* state_info);
+
 void write_enter_sum_message(state_info_t* state_info);
 void write_algorithm_message(state_info_t* state_info);
 void write_algorithm_name(state_info_t* state_info);

@@ -31,7 +31,7 @@ extern SPI_HandleTypeDef ST7735_SPI_PORT;
 #define ST7735_HEIGHT       160
 #define ST7735_XSTART       2
 #define ST7735_YSTART       1
-#define ST7735_DATA_ROTATION  (ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_MADCTL_RGB)
+#define ST7735_DATA_ROTATION  ST7735_MADCTL_RGB
 #endif //ST7735S_1_8_DEFAULT_ORIENTATION
 
 // 1.44" display, default orientation
@@ -122,8 +122,6 @@ void ST7735_DrawTouchGFX(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const u
 void ST7735_InvertColors(bool invert);
 void ST7735_Backlight_On(void);
 void ST7735_Backlight_Off(void);
-void ST7735_SetRotation();
-uint8_t ST7735_GetRotation(void);
 int16_t ST7735_GetHeight(void);
 int16_t ST7735_GetWidth(void);
 

@@ -1,9 +1,3 @@
-/*
- * ST773.c
- *
- */
-
-
 #include "ST7735.h"
 #include "stdlib.h"
 
@@ -20,15 +14,10 @@
 #define SWAP_INT16_T(a, b) { int16_t t = a; a = b; b = t; }
 #define DELAY 0x80
 
-#if defined(ST7735_1_8_DEFAULT_ORIENTATION) || defined(ST7735S_1_8_DEFAULT_ORIENTATION)
-static uint8_t _data_rotation[4] = { ST7735_MADCTL_MX, ST7735_MADCTL_MY, ST7735_MADCTL_MV, ST7735_MADCTL_RGB };
-#endif
-
 #if defined(ST7735_1_44_DEFAULT_ORIENTATION) || defined(ST7735_MINI_DEFAULT_ORIENTATION)
 static uint8_t _data_rotation[4] = { ST7735_MADCTL_MX, ST7735_MADCTL_MY, ST7735_MADCTL_MV, ST7735_MADCTL_BGR };
 #endif
 
-static uint8_t _value_rotation = 0;
 static int16_t _height = ST7735_HEIGHT, _width = ST7735_WIDTH;
 static uint8_t _xstart = ST7735_XSTART, _ystart = ST7735_YSTART;
 
@@ -69,47 +58,7 @@ init_cmds1[] = {                // Init for 7735R, part 1 (red or green tab)
       ST7735_MADCTL, 1,     // 14: Memory access control (directions), 1 arg:
       ST7735_DATA_ROTATION,     //     row addr/col addr, bottom to top refresh
       ST7735_COLMOD, 1,     // 15: set color mode, 1 arg, no delay:
-      0x05},                  //     16-bit color
-
-#if (defined(ST7735_IS_128X128) || defined(ST7735_IS_160X128))
-init_cmds2[] = {            // Init for 7735R, part 2 (1.44" display)
-    2,                  //  2 commands in list:
-    ST7735_CASET, 4,    //  1: Column addr set, 4 args, no delay:
-    0x00, 0x00,         //     XSTART = 0
-    0x00, 0x7F,         //     XEND = 127
-    ST7735_RASET, 4,    //  2: Row addr set, 4 args, no delay:
-    0x00, 0x00,         //     XSTART = 0
-    0x00, 0x7F },       //     XEND = 127
-#endif // ST7735_IS_128X128
-
-#ifdef ST7735_IS_160X80
-init_cmds2[] = {          // Init for 7735S, part 2 (160x80 display)
-    3,                          //  3 commands in list:
-    ST7735_CASET, 4,        //  1: Column addr set, 4 args, no delay:
-    0x00, 0x00,               //     XSTART = 0
-    0x00, 0x4F,               //     XEND = 79
-    ST7735_RASET, 4,        //  2: Row addr set, 4 args, no delay:
-    0x00, 0x00,               //     XSTART = 0
-    0x00, 0x9F ,              //     XEND = 159
-    ST7735_INVON, 0 },        //  3: Invert colors
-#endif
-
-init_cmds3[] = {                // Init for 7735R, part 3 (red or green tab)
-    4,                          //  4 commands in list:
-    ST7735_GMCTRP1, 16,     //  1: Magical unicorn dust, 16 args, no delay:
-    0x02, 0x1c, 0x07, 0x12,
-    0x37, 0x32, 0x29, 0x2d,
-    0x29, 0x25, 0x2B, 0x39,
-    0x00, 0x01, 0x03, 0x10,
-    ST7735_GMCTRN1, 16,     //  2: Sparkles and rainbows, 16 args, no delay:
-    0x03, 0x1d, 0x07, 0x06,
-    0x2E, 0x2C, 0x29, 0x2D,
-    0x2E, 0x2E, 0x37, 0x3F,
-    0x00, 0x00, 0x02, 0x10,
-    ST7735_NORON, DELAY,    //  3: Normal display on, no args, w/delay
-    10,                       //     10 ms delay
-    ST7735_DISPON, DELAY,     //  4: Main screen turn on, no args w/delay
-    100 };                    //     100 ms delay
+      0x05};                  //     16-bit color
 
 static void ST7735_GPIO_Init(void);
 static void ST7735_WriteCommand(uint8_t cmd);
@@ -120,20 +69,7 @@ static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint
 
 static void ST7735_GPIO_Init(void)
 {
-//  GPIO_InitTypeDef GPIO_InitStruct = {0};
-//
-//  /* GPIO Ports Clock Enable */
-//  __HAL_RCC_GPIOB_CLK_ENABLE();
-//
-//  /*Configure GPIO pin Output Level */
-//  HAL_GPIO_WritePin(GPIOB, ST7735_RES_Pin|ST7735_DC_Pin|ST7735_CS_Pin|ST7735_BL_Pin, GPIO_PIN_RESET);
-//
-//  /*Configure GPIO pins : ST7735_RES_Pin ST7735_DC_Pin ST7735_CS_Pin ST7735_BL_Pin */
-//  GPIO_InitStruct.Pin = ST7735_RES_Pin|ST7735_DC_Pin|ST7735_CS_Pin|ST7735_BL_Pin;
-//  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-//  GPIO_InitStruct.Pull = GPIO_NOPULL;
-//  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-//  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
 }
 
 static void ST7735_Reset()
@@ -148,7 +84,6 @@ static void ST7735_WriteCommand(uint8_t cmd)
   TFT_DC_C();
 #ifdef USE_SPI_DMA
   HAL_SPI_Transmit_DMA(&ST7735_SPI_PORT, &cmd, sizeof(cmd));
-  //while(hspi1.State == HAL_SPI_STATE_BUSY_TX);
 #else
   HAL_SPI_Transmit(&ST7735_SPI_PORT, &cmd, sizeof(cmd), HAL_MAX_DELAY);
 #endif
@@ -244,8 +179,8 @@ void ST7735_Init()
   TFT_CS_L();
     ST7735_Reset();
     ST7735_ExecuteCommandList(init_cmds1);
-    ST7735_ExecuteCommandList(init_cmds2);
-    ST7735_ExecuteCommandList(init_cmds3);
+    //ST7735_ExecuteCommandList(init_cmds2);
+    //ST7735_ExecuteCommandList(init_cmds3);
     TFT_CS_H();
 }
 
@@ -364,31 +299,6 @@ void ST7735_Backlight_On(void)
 void ST7735_Backlight_Off(void)
 {
   TFT_BL_L();
-}
-
-/***************************************************************************************
-** Function name:           setRotation
-** Description:             rotate the screen orientation m = 0-3
-***************************************************************************************/
-void ST7735_SetRotation()
-{
-  TFT_CS_L();
-
-  ST7735_WriteCommand(ST7735_MADCTL);
-
-  uint8_t d_r = _data_rotation[3];
-  ST7735_WriteData(&d_r, sizeof(d_r));
-  _width  = ST7735_WIDTH;
-  _height = ST7735_HEIGHT;
-  _xstart = ST7735_XSTART;
-  _ystart = ST7735_YSTART;
-
-  TFT_CS_H();
-}
-
-uint8_t ST7735_GetRotation(void)
-{
-  return _value_rotation;
 }
 
 int16_t ST7735_GetHeight(void)

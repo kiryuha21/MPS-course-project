@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 void format_buffer(char* buffer, size_t line_width);
 void clear_buffer(char* buffer);
