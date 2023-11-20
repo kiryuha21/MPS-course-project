@@ -1,0 +1,4 @@
+../Core/Src/sd_card_interaction.c:3:12:new_sd_card	16	static
+../Core/Src/sd_card_interaction.c:9:6:mount_sd_card	16	static
+../Core/Src/sd_card_interaction.c:20:6:show_files	16	static
+../Core/Src/sd_card_interaction.c:34:6:read_next_file	16	static

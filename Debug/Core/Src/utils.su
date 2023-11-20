@@ -1,0 +1,4 @@
+../Core/Src/utils.c:3:6:format_buffer	136	static
+../Core/Src/utils.c:24:6:clear_buffer	16	static
+../Core/Src/utils.c:28:6:char_array_to_uint32_array	32	static
+../Core/Src/utils.c:34:6:uint32_array_to_char_array	32	static

@@ -1,4 +1,4 @@
-#include "ST7735.h"
+#include "ST7735/ST7735.h"
 #include "stdlib.h"
 
 #define TFT_BL_H()  HAL_GPIO_WritePin(ST7735_BL_GPIO_Port, ST7735_BL_Pin, GPIO_PIN_SET)

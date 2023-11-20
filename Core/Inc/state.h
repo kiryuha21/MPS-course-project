@@ -6,8 +6,8 @@
 #define CHOOSE_ALGO_MSG "Choose algorithm:[NEXT/PREV]"
 
 #include "utils.h"
-#include "fonts.h"
-#include "ST7735.h"
+#include "ST7735/fonts.h"
+#include "ST7735/ST7735.h"
 
 extern UART_HandleTypeDef huart2;
 
@@ -20,9 +20,9 @@ typedef enum STATE {
 } STATE;
 
 static const char* algorithms[] = {
-		"first      ",
-		"second     ",
-		"third      "
+		"Native CRC",
+		"Software CRC",
+		"Software MD5"
 };
 
 typedef struct state_info_t {

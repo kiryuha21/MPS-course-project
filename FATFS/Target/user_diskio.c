@@ -34,6 +34,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
+#include <SD-Card/fatfs_sd.h>
 #include "ff_gen_drv.h"
 
 /* Private typedef -----------------------------------------------------------*/

@@ -79,7 +79,9 @@ void write_algorithm_message(state_info_t* state_info) {
 
 void write_algorithm_name(state_info_t* state_info) {
 	uint16_t y = TERMINAL_LINE_HEIGHT * 2;
-	ST7735_DrawString(0, y, algorithms[state_info->algorithm_index], Font_11x18, ST7735_BLACK, ST7735_WHITE);
+	sprintf(state_info->output_buffer, algorithms[state_info->algorithm_index]);
+	format_buffer(state_info->output_buffer, TERMINAL_LINE_WIDTH);
+	ST7735_DrawString(0, y, state_info->output_buffer, Font_11x18, ST7735_BLACK, ST7735_WHITE);
 }
 
 void write_execution_time(state_info_t* state_info) {

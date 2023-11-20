@@ -17,8 +17,9 @@ typedef struct sd_card_t {
 } sd_card_t;
 
 sd_card_t* new_sd_card();
+void free_sd_card(sd_card_t* sd_card);
 void mount_sd_card(sd_card_t* sd_card, void (*print_callback)(char* text));
-void show_files(sd_card_t* sd_card, void(*print_callback)(char* text));
+FRESULT show_files(sd_card_t* sd_card, char* path, void(*print_callback)(char* text));
 void read_next_file(sd_card_t* sd_card, void(*print_callback)(char* text));
 
 
