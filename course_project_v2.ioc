@@ -2,9 +2,9 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
-FATFS.IPParameters=_MAX_SS,_USE_LFN
-FATFS._MAX_SS=4096
-FATFS._USE_LFN=1
+FATFS.IPParameters=_FS_LOCK,_STRF_ENCODE
+FATFS._FS_LOCK=255
+FATFS._STRF_ENCODE=0
 File.Version=6
 GPIO.groupedBy=Group By Peripherals
 KeepUserPlacement=false

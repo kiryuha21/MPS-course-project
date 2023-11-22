@@ -4,7 +4,6 @@
 #include "diskio.h"
 #include "SD-Card/fatfs_sd.h"
 
-
 extern SPI_HandleTypeDef 	hspi2;
 #define HSPI_SDCARD		 	&hspi2
 #define	SD_CS_PORT			GPIOB

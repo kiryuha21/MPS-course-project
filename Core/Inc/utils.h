@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 void format_buffer(char* buffer, size_t line_width);
 void clear_buffer(char* buffer);

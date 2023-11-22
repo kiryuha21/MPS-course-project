@@ -875,6 +875,7 @@ DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
 	DWORD clst		/* Cluster# to be converted */
 )
 {
+	HAL_Delay(1);
 	clst -= 2;
 	if (clst >= fs->n_fatent - 2) return 0;		/* Invalid cluster# */
 	return clst * fs->csize + fs->database;

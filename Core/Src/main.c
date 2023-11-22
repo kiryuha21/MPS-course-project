@@ -63,7 +63,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_CRC_Init(void);
 /* USER CODE BEGIN PFP */
-void print_uart_message(char* message);
+void print_uart_message(char* format, ...);
 void get_uart_input();
 bool is_checksum_end();
 /* USER CODE END PFP */
@@ -112,8 +112,8 @@ int main(void)
 
   sd_card = new_sd_card();
   mount_sd_card(sd_card, print_uart_message);
-  char buff[256] = {0};
-  //show_files(sd_card, buff, print_uart_message);
+  unsigned int hash = show_files(sd_card, print_uart_message);
+  print_uart_message("%lu\r", hash);
 
   state_info = new_state_info();
   set_state(state_info, ENTER_SUM);
@@ -422,8 +422,14 @@ void get_uart_input() {
 	}
 }
 
-void print_uart_message(char* message) {
-	HAL_UART_Transmit_IT(&huart2, (uint8_t*)message, strlen(message));
+void print_uart_message(char* format, ...) {
+	va_list args;
+	char res[DEFAULT_BUFFER_SIZE];
+	va_start(args, format);
+	vsprintf(res, format, args);
+	va_end(args);
+
+	HAL_UART_Transmit(&huart2, (uint8_t*)res, strlen(res), 200);
 }
 /* USER CODE END 4 */
 

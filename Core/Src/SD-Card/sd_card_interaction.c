@@ -11,7 +11,7 @@ void free_sd_card(sd_card_t* sd_card) {
 	free(sd_card);
 }
 
-void mount_sd_card(sd_card_t* sd_card, void (*print_callback)(char* text)) {
+void mount_sd_card(sd_card_t* sd_card, void (*print_callback)(char* format, ...)) {
 	sd_card->fresult = f_mount(&sd_card->fs, "/", 1);
 	if (sd_card->fresult != FR_OK) {
 		print_callback("Error in mounting sd_card\r");
@@ -19,66 +19,83 @@ void mount_sd_card(sd_card_t* sd_card, void (*print_callback)(char* text)) {
 	}
 
 	print_callback("successful mount...\r");
-	f_opendir(&sd_card->directory, "/");
-	DIR dir;
-	FRESULT res = f_opendir(&dir, "\\FOLDER");
-	if (res == FR_INT_ERR) {
-		HAL_Delay(200);
-		print_callback("internal error");
-		HAL_Delay(200);
-	}
 }
 
-FRESULT show_files(sd_card_t* sd_card, char* path, void(*print_callback)(char* text)) {
+unsigned int hash_next_file(char* filename, void(*print_callback)(char* format, ...)) {
+	static bool hash_initialized = false;
+
+	FIL file;
+	unsigned int res = f_open(&file, filename, FA_READ);
+	if (res != 0) {
+		print_callback("filename is %s\r", filename);
+		print_callback("something went wrong!");
+		return res;
+	}
+
+	UINT br;
+	char buffer[DEFAULT_BUFFER_SIZE];
+	uint32_t res_buffer[DEFAULT_BUFFER_SIZE];
+	while (true) {
+		f_read(&file, buffer, DEFAULT_BUFFER_SIZE, &br);
+		if (br == 0) {
+			break;
+		}
+		char_array_to_uint32_array(buffer, res_buffer, DEFAULT_BUFFER_SIZE);
+		if (!hash_initialized) {
+			res = HAL_CRC_Calculate(&hcrc, res_buffer, DEFAULT_BUFFER_SIZE);
+		} else {
+			res = HAL_CRC_Accumulate(&hcrc, res_buffer, DEFAULT_BUFFER_SIZE);
+		}
+	}
+	print_callback("\rbuffer is '%s'\r", buffer);
+	print_callback("%\r%lu\r", res);
+
+	f_close(&file);
+	return res;
+}
+
+unsigned int show_files(sd_card_t* sd_card, void(*print_callback)(char* format, ...)) {
+	static char path[DEFAULT_BUFFER_SIZE] = {0};
 	DIR directory;
-	FRESULT res = f_opendir(&directory, path);
+	unsigned int res = f_opendir(&directory, path);
 	if (res != FR_OK) {
-		HAL_Delay(200);
-		print_callback("cannot open dir ");
-		HAL_Delay(200);
+		print_callback("\rcannot open dir ");
 		print_callback(path);
 		return res;
 	}
 
-	HAL_Delay(200);
-	print_callback("opened ");
-	HAL_Delay(200);
+	print_callback("\ropened ");
 	print_callback(path);
-	HAL_Delay(200);
-	print_callback("\r");
 	for (;;) {
 		res = f_readdir(&directory, &sd_card->file_info);
 		if (res != FR_OK) {
 			print_callback("error occurred!");
-			HAL_Delay(200);
 			break;
 		}
 
 		if (sd_card->file_info.fname[0] == 0) {
-			print_callback("end of directory!");
-			HAL_Delay(200);
+			print_callback("\rend of directory!");
 			break;
 		}
 
 		if (sd_card->file_info.fattrib & AM_DIR) {
 			UINT i = strlen(path);
 			sprintf(&path[i], "\\%s", sd_card->file_info.fname);
-			res = show_files(sd_card, path, print_callback);
+			res = show_files(sd_card, print_callback);
 			if (res != FR_OK) {
 				break;
 			}
 			path[i] = 0;
-		} else {
+		} else { // is file
+			char full_name[DEFAULT_BUFFER_SIZE] = {0};
+			sprintf(full_name, "%s\\%s", path, sd_card->file_info.fname);
+			print_callback("\r");
 			print_callback(sd_card->file_info.fname);
-			HAL_Delay(200);
+			res = hash_next_file(full_name, print_callback);
 		}
 	}
 	f_closedir(&directory);
 
 	return res;
-}
-
-void read_next_file(sd_card_t* sd_card, void(*print_callback)(char* text)) {
-	return;
 }
 
