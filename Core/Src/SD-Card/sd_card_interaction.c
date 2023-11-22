@@ -47,7 +47,6 @@ FRESULT hash_next_file(
 			break;
 		}
 		algorithm_function(ctx, buffer);
-		print_uart_message("buffer is '%s'\r", buffer);
 	}
 
 	f_close(&file);

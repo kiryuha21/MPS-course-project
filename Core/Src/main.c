@@ -107,16 +107,16 @@ int main(void)
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
   ST7735_Init();
-  //ST7735_Backlight_On();
 
   state_info = new_state_info();
-  set_state(state_info, ENTER_SUM);
+  state_info->state_request = ENTER_SUM;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  check_state_request(state_info);
 	  get_uart_input();
 	  reduce_state_to_action(state_info);
     /* USER CODE END WHILE */
@@ -355,7 +355,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		set_prev_algo(state_info);
 		break;
 	case EXECUTE_BUTTON_Pin:
-		set_state(state_info, EXECUTE);
+		state_info->state_request = EXECUTE;
 		break;
 	default:
 		break;
@@ -389,7 +389,7 @@ bool is_checksum_end() {
 	strcpy(state_info->reference_checksum, state_info->uart_buffer);
 	clear_buffer(state_info->uart_buffer, DEFAULT_BUFFER_SIZE);
 	state_info->uart_write_ptr = 0;
-	set_state(state_info, CHOOSE_ALGO);
+	state_info->state_request = CHOOSE_ALGO;
 
 	return true;
 }

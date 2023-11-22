@@ -8,6 +8,7 @@ state_info_t* new_state_info() {
 
 	state_info->algorithm_index = 0;
 	state_info->current_state = IDLE;
+	state_info->current_state = IDLE;
 	state_info->deltatime = 0;
 
 	state_info->uart_write_ptr = 0;
@@ -17,13 +18,6 @@ state_info_t* new_state_info() {
 	state_info->sd_card = new_sd_card();
 	mount_sd_card(state_info->sd_card);
 
-//	uint32_t start = HAL_GetTick();
-//	set_algorithm(state_info->sd_card->algorithm_ctx, MD5);
-//	calculate_checksum(state_info->sd_card);
-//	state_info->deltatime = HAL_GetTick() - start;
-//	print_uart_message("deltatime is %lu\r", state_info->deltatime);
-//	print_uart_message("checksum is %u\r", state_info->sd_card->algorithm_ctx->result);
-
 	return state_info;
 }
 
@@ -32,11 +26,17 @@ void free_state_info(state_info_t* state_info) {
 	free(state_info);
 }
 
+void check_state_request(state_info_t* state_info) {
+	if (state_info->state_request == IDLE) {
+		return;
+	}
+
+	set_state(state_info, state_info->state_request);
+	state_info->state_request = IDLE;
+}
+
 void set_state(state_info_t* state_info, STATE new_state) {
 	state_info->current_state = new_state;
-	if (new_state == EXECUTE) {
-		print_uart_message("execution\r");
-	}
 	reduce_state_change_to_effect(state_info);
 }
 
@@ -79,11 +79,16 @@ ALGORITHM get_algo_from_index(int algorithm_index) {
 	}
 }
 
+char* hash_result(state_info_t* state_info) {
+	return state_info->sd_card->algorithm_ctx->result;
+}
+
 void process_execution(state_info_t* state_info) {
 	uint32_t start = HAL_GetTick();
 	ALGORITHM algo = get_algo_from_index(state_info->algorithm_index);
 	set_algorithm(state_info->sd_card->algorithm_ctx, algo);
 	calculate_checksum(state_info->sd_card);
+	algorithm_finalize(state_info->sd_card->algorithm_ctx);
 	state_info->deltatime = HAL_GetTick() - start;
 }
 
@@ -137,12 +142,20 @@ void write_algorithm_name(state_info_t* state_info) {
 }
 
 void write_checksum_report(state_info_t* state_info) {
-	sprintf(
-			state_info->output_buffer, "Checksums %sequal, executed in %lu ms",
-			checksums_equal(state_info) ? "" : "not ",
-			state_info->deltatime
-	);
+	char* result = hash_result(state_info);
+	bool is_match = checksums_equal(state_info);
+
+	sprintf(state_info->output_buffer, "Checksums %sequal",	is_match ? "" : "not ");
 	format_buffer(state_info->output_buffer, TERMINAL_LINE_WIDTH);
 	ST7735_DrawString(0, 0, state_info->output_buffer, Font_11x18, ST7735_BLACK, ST7735_WHITE);
+
+	uint16_t y1 = TERMINAL_LINE_HEIGHT * (is_match ? 2 : 3);
+	ST7735_DrawString(0, y1, "Checksum:", Font_11x18, ST7735_BLACK, ST7735_WHITE);
+	ST7735_DrawString(0, y1 + TERMINAL_LINE_HEIGHT * 1.25, result, Font_7x10, ST7735_BLACK, ST7735_WHITE);
+
+	uint16_t y2 = y1 + TERMINAL_LINE_HEIGHT * 2;
+	clear_buffer(state_info->output_buffer, DEFAULT_BUFFER_SIZE);
+	sprintf(state_info->output_buffer, "Executed in %lu ms", state_info->deltatime);
+	ST7735_DrawString(0, y2, state_info->output_buffer, Font_11x18, ST7735_BLACK, ST7735_WHITE);
 }
 

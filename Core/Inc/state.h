@@ -27,6 +27,7 @@ typedef struct state_info_t {
 	char output_buffer[DEFAULT_BUFFER_SIZE];
 
 	STATE current_state;
+	STATE state_request;
 	int algorithm_index;
 	uint32_t deltatime;
 
@@ -40,6 +41,7 @@ typedef struct state_info_t {
 state_info_t* new_state_info();
 void free_state_info(state_info_t* state_info);
 
+void check_state_request(state_info_t* state_info);
 void set_state(state_info_t* state_info, STATE new_state);
 void reset_state(state_info_t* state_info);
 void set_next_algo(state_info_t* state_info);
