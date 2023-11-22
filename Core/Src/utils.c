@@ -21,8 +21,8 @@ void format_buffer(char* buffer, size_t line_width) {
 	strcpy(buffer, res);
 }
 
-void clear_buffer(char* buffer) {
-	memset(buffer, '\0', DEFAULT_BUFFER_SIZE);
+void clear_buffer(char* buffer, size_t size) {
+	memset(buffer, '\0', size);
 }
 
 void char_array_to_uint32_array(char* src, uint32_t* dest, int len) {
@@ -42,4 +42,14 @@ void to_lower(char* string) {
 	for (size_t i = 0; i < len; ++i) {
 		string[i] = tolower(string[i]);
 	}
+}
+
+void print_uart_message(char* format, ...) {
+	va_list args;
+	char res[DEFAULT_BUFFER_SIZE];
+	va_start(args, format);
+	vsprintf(res, format, args);
+	va_end(args);
+
+	HAL_UART_Transmit(&huart2, (uint8_t*)res, strlen(res), 200);
 }

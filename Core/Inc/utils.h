@@ -13,10 +13,15 @@
 #include <ctype.h>
 #include <stdarg.h>
 
+#include "main.h"
+
+extern UART_HandleTypeDef huart2;
+
 void format_buffer(char* buffer, size_t line_width);
-void clear_buffer(char* buffer);
+void clear_buffer(char* buffer, size_t size);
 void char_array_to_uint32_array(char* src, uint32_t* dest, int len);
 void uint32_array_to_char_array(uint32_t* src, char* dest, int len);
 void to_lower(char* string);
+void print_uart_message(char* format, ...);
 
 #endif /* INC_UTILS_H_ */

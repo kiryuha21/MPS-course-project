@@ -380,7 +380,6 @@ DRESULT SD_disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
 				if (!SD_RxDataBlock(buff, 512)) break;
 				buff += 512;
 			} while (--count);
-
 			/* STOP_TRANSMISSION */
 			SD_SendCmd(CMD12, 0);
 		}

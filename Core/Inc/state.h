@@ -8,15 +8,13 @@
 #include "utils.h"
 #include "ST7735/fonts.h"
 #include "ST7735/ST7735.h"
-
-extern UART_HandleTypeDef huart2;
+#include "SD-Card/sd_card_interaction.h"
 
 typedef enum STATE {
 	IDLE,
 	ENTER_SUM,
 	CHOOSE_ALGO,
 	EXECUTE,
-	OUTPUT
 } STATE;
 
 static const char* algorithms[] = {
@@ -30,24 +28,29 @@ typedef struct state_info_t {
 
 	STATE current_state;
 	int algorithm_index;
-	int deltatime;
+	uint32_t deltatime;
 
 	int uart_write_ptr;
 	char uart_buffer[DEFAULT_BUFFER_SIZE];
 	char reference_checksum[DEFAULT_BUFFER_SIZE];
+
+	sd_card_t* sd_card;
 } state_info_t;
 
 state_info_t* new_state_info();
+void free_state_info(state_info_t* state_info);
+
 void set_state(state_info_t* state_info, STATE new_state);
+void reset_state(state_info_t* state_info);
 void set_next_algo(state_info_t* state_info);
 void set_prev_algo(state_info_t* state_info);
 
-void reduce_state_to_constant_output(state_info_t* state_info);
-void reduce_state_change_to_action(state_info_t* state_info);
+void reduce_state_to_action(state_info_t* state_info);
+void reduce_state_change_to_effect(state_info_t* state_info);
 
 void write_enter_sum_message(state_info_t* state_info);
 void write_algorithm_message(state_info_t* state_info);
 void write_algorithm_name(state_info_t* state_info);
-void write_execution_time(state_info_t* state_info);
+void write_checksum_report(state_info_t* state_info);
 
 #endif /* INC_STATE_H_ */

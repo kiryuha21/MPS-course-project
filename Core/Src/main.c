@@ -52,7 +52,6 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 state_info_t* state_info = NULL;
-sd_card_t* sd_card = NULL;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,12 +107,7 @@ int main(void)
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
   ST7735_Init();
-  ST7735_Backlight_On();
-
-  sd_card = new_sd_card();
-  mount_sd_card(sd_card, print_uart_message);
-  unsigned int hash = show_files(sd_card, print_uart_message);
-  print_uart_message("%lu\r", hash);
+  //ST7735_Backlight_On();
 
   state_info = new_state_info();
   set_state(state_info, ENTER_SUM);
@@ -124,13 +118,12 @@ int main(void)
   while (1)
   {
 	  get_uart_input();
-	  reduce_state_to_constant_output(state_info);
+	  reduce_state_to_action(state_info);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
-  free(state_info);
-  free_sd_card(sd_card);
+  free_state_info(state_info);
   /* USER CODE END 3 */
 }
 
@@ -317,7 +310,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
@@ -351,6 +343,10 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+	if (state_info->current_state != CHOOSE_ALGO) {
+		return;
+	}
+
 	switch (GPIO_Pin) {
 	case NEXT_ALGO_BUTTON_Pin:
 		set_next_algo(state_info);
@@ -391,7 +387,7 @@ bool is_checksum_end() {
 	}
 
 	strcpy(state_info->reference_checksum, state_info->uart_buffer);
-	clear_buffer(state_info->uart_buffer);
+	clear_buffer(state_info->uart_buffer, DEFAULT_BUFFER_SIZE);
 	state_info->uart_write_ptr = 0;
 	set_state(state_info, CHOOSE_ALGO);
 
@@ -420,16 +416,6 @@ void get_uart_input() {
 	} else if (state_info->current_state == CHOOSE_ALGO) {
 		read_algorithm_shift();
 	}
-}
-
-void print_uart_message(char* format, ...) {
-	va_list args;
-	char res[DEFAULT_BUFFER_SIZE];
-	va_start(args, format);
-	vsprintf(res, format, args);
-	va_end(args);
-
-	HAL_UART_Transmit(&huart2, (uint8_t*)res, strlen(res), 200);
 }
 /* USER CODE END 4 */
 

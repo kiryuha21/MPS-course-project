@@ -14,10 +14,6 @@
 #define SWAP_INT16_T(a, b) { int16_t t = a; a = b; b = t; }
 #define DELAY 0x80
 
-#if defined(ST7735_1_44_DEFAULT_ORIENTATION) || defined(ST7735_MINI_DEFAULT_ORIENTATION)
-static uint8_t _data_rotation[4] = { ST7735_MADCTL_MX, ST7735_MADCTL_MY, ST7735_MADCTL_MV, ST7735_MADCTL_BGR };
-#endif
-
 static int16_t _height = ST7735_HEIGHT, _width = ST7735_WIDTH;
 static uint8_t _xstart = ST7735_XSTART, _ystart = ST7735_YSTART;
 
@@ -82,23 +78,13 @@ static void ST7735_Reset()
 static void ST7735_WriteCommand(uint8_t cmd)
 {
   TFT_DC_C();
-#ifdef USE_SPI_DMA
-  HAL_SPI_Transmit_DMA(&ST7735_SPI_PORT, &cmd, sizeof(cmd));
-#else
   HAL_SPI_Transmit(&ST7735_SPI_PORT, &cmd, sizeof(cmd), HAL_MAX_DELAY);
-#endif
 }
 
 static void ST7735_WriteData(uint8_t* buff, size_t buff_size)
 {
   TFT_DC_D();
-#ifdef USE_SPI_DMA
-  HAL_SPI_Transmit_DMA(&ST7735_SPI_PORT, buff, buff_size);
-  while(hspi1.State == HAL_SPI_STATE_BUSY_TX);
-
-#else
   HAL_SPI_Transmit(&ST7735_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
-#endif
 }
 
 static void ST7735_ExecuteCommandList(const uint8_t *addr)
@@ -244,12 +230,7 @@ void ST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16
     {
         for(x = w; x > 0; x--)
         {
-#ifdef USE_SPI_DMA
-          HAL_SPI_Transmit_DMA(&ST7735_SPI_PORT, data, sizeof(data));
-          //while(hspi1.State == HAL_SPI_STATE_BUSY_TX);
-#else
           HAL_SPI_Transmit(&ST7735_SPI_PORT, data, sizeof(data), HAL_MAX_DELAY);
-#endif
         }
     }
     TFT_CS_H();
@@ -289,16 +270,6 @@ void ST7735_InvertColors(bool invert)
   TFT_CS_L();
     ST7735_WriteCommand(invert ? ST7735_INVON : ST7735_INVOFF);
     TFT_CS_H();
-}
-
-void ST7735_Backlight_On(void)
-{
-  TFT_BL_H();
-}
-
-void ST7735_Backlight_Off(void)
-{
-  TFT_BL_L();
 }
 
 int16_t ST7735_GetHeight(void)
