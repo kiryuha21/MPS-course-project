@@ -1,4 +1,0 @@
-../Core/Src/sd_card_interaction.c:3:12:new_sd_card	1
-../Core/Src/sd_card_interaction.c:9:6:mount_sd_card	2
-../Core/Src/sd_card_interaction.c:20:6:show_files	3
-../Core/Src/sd_card_interaction.c:34:6:read_next_file	2
