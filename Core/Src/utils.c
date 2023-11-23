@@ -46,7 +46,7 @@ void to_lower(char* string) {
 
 void print_uart_message(char* format, ...) {
 	va_list args;
-	char res[DEFAULT_BUFFER_SIZE];
+	char res[DEFAULT_BUFFER_SIZE]={0};
 	va_start(args, format);
 	vsprintf(res, format, args);
 	va_end(args);

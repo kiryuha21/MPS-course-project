@@ -1,6 +1,6 @@
 #include "Algorithms/crc8.h"
 
-unsigned int crc8(unsigned int crc, unsigned char const *data, size_t len)
+uint32_t crc8(uint32_t crc, unsigned char const *data, size_t len)
 {
     if (data == NULL) {
     	return 0;

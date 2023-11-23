@@ -46,6 +46,7 @@ FRESULT hash_next_file(
 		if (br == 0) {
 			break;
 		}
+		// print_uart_message("%s\r", buffer);
 		algorithm_function(ctx, buffer);
 	}
 
@@ -59,7 +60,7 @@ FRESULT calculate_checksum(sd_card_t* sd_card) {
 
 	FRESULT fres = f_opendir(&directory, path);
 	if (fres != FR_OK) {
-		print_uart_message("\rcannot open dir %s", path);
+		print_uart_message("\rcannot open dir %s\r", path);
 		return fres;
 	}
 
@@ -67,7 +68,7 @@ FRESULT calculate_checksum(sd_card_t* sd_card) {
 	while (true) {
 		fres = f_readdir(&directory, &sd_card->file_info);
 		if (fres != FR_OK) {
-			print_uart_message("error occurred!");
+			print_uart_message("error occurred!\r");
 			break;
 		}
 

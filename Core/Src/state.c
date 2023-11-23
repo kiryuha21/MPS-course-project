@@ -8,12 +8,12 @@ state_info_t* new_state_info() {
 
 	state_info->algorithm_index = 0;
 	state_info->current_state = IDLE;
-	state_info->current_state = IDLE;
+	state_info->state_request = IDLE;
 	state_info->deltatime = 0;
 
 	state_info->uart_write_ptr = 0;
 	clear_buffer(state_info->uart_buffer, DEFAULT_BUFFER_SIZE);
-	clear_buffer(state_info->reference_checksum, DEFAULT_BUFFER_SIZE);
+	clear_buffer(state_info->reference_checksum, MAX_CRC_LEN);
 
 	state_info->sd_card = new_sd_card();
 	mount_sd_card(state_info->sd_card);
@@ -24,6 +24,12 @@ state_info_t* new_state_info() {
 void free_state_info(state_info_t* state_info) {
 	free_sd_card(state_info->sd_card);
 	free(state_info);
+}
+
+void reset_state(state_info_t* state_info) {
+	set_state(state_info, ENTER_SUM);
+	reset_calculation(state_info->sd_card);
+	state_info->algorithm_index = 0;
 }
 
 void check_state_request(state_info_t* state_info) {
@@ -38,11 +44,6 @@ void check_state_request(state_info_t* state_info) {
 void set_state(state_info_t* state_info, STATE new_state) {
 	state_info->current_state = new_state;
 	reduce_state_change_to_effect(state_info);
-}
-
-void reset_state(state_info_t* state_info) {
-	set_state(state_info, ENTER_SUM);
-	reset_calculation(state_info->sd_card);
 }
 
 void set_next_algo(state_info_t* state_info) {
@@ -79,10 +80,6 @@ ALGORITHM get_algo_from_index(int algorithm_index) {
 	}
 }
 
-char* hash_result(state_info_t* state_info) {
-	return state_info->sd_card->algorithm_ctx->result;
-}
-
 void process_execution(state_info_t* state_info) {
 	uint32_t start = HAL_GetTick();
 	ALGORITHM algo = get_algo_from_index(state_info->algorithm_index);
@@ -92,11 +89,12 @@ void process_execution(state_info_t* state_info) {
 	state_info->deltatime = HAL_GetTick() - start;
 }
 
+char* hash_result(state_info_t* state_info) {
+	return state_info->sd_card->algorithm_ctx->result;
+}
+
 bool checksums_equal(state_info_t* state_info) {
-	return strcmp(
-			state_info->reference_checksum,
-			state_info->sd_card->algorithm_ctx->result
-	) == 0;
+	return strcmp(state_info->reference_checksum, hash_result(state_info)) == 0;
 }
 
 void reduce_state_change_to_effect(state_info_t* state_info) {
@@ -105,6 +103,7 @@ void reduce_state_change_to_effect(state_info_t* state_info) {
 		ST7735_FillScreen(ST7735_WHITE);
 		clear_buffer(state_info->output_buffer, DEFAULT_BUFFER_SIZE);
 		write_enter_sum_message(state_info);
+		print_uart_message("[checksum]:");
 		break;
 	case CHOOSE_ALGO:
 		ST7735_FillScreen(ST7735_WHITE);
@@ -117,7 +116,11 @@ void reduce_state_change_to_effect(state_info_t* state_info) {
 		process_execution(state_info);
 		write_checksum_report(state_info);
 		break;
+	case RESET_INTENT:
+		reset_state(state_info);
+		break;
 	default:
+		print_uart_message("this shouldn't happen\r");
 		break;
 	}
 }
@@ -151,7 +154,7 @@ void write_checksum_report(state_info_t* state_info) {
 
 	uint16_t y1 = TERMINAL_LINE_HEIGHT * (is_match ? 2 : 3);
 	ST7735_DrawString(0, y1, "Checksum:", Font_11x18, ST7735_BLACK, ST7735_WHITE);
-	ST7735_DrawString(0, y1 + TERMINAL_LINE_HEIGHT * 1.25, result, Font_7x10, ST7735_BLACK, ST7735_WHITE);
+	ST7735_DrawString(0, y1 + TERMINAL_LINE_HEIGHT, result, Font_7x10, ST7735_BLACK, ST7735_WHITE);
 
 	uint16_t y2 = y1 + TERMINAL_LINE_HEIGHT * 2;
 	clear_buffer(state_info->output_buffer, DEFAULT_BUFFER_SIZE);

@@ -315,19 +315,19 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10|GPIO_PIN_3
-                          |GPIO_PIN_4, GPIO_PIN_RESET);
+                          |GPIO_PIN_4|GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PB1 PB2 PB10 PB3
-                           PB4 */
+                           PB4 PB9 */
   GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10|GPIO_PIN_3
-                          |GPIO_PIN_4;
+                          |GPIO_PIN_4|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NEXT_ALGO_BUTTON_Pin PREV_ALGO_BUTTON_Pin EXECUTE_BUTTON_Pin */
-  GPIO_InitStruct.Pin = NEXT_ALGO_BUTTON_Pin|PREV_ALGO_BUTTON_Pin|EXECUTE_BUTTON_Pin;
+  /*Configure GPIO pins : NEXT_ALGO_BUTTON_Pin PREV_ALGO_BUTTON_Pin EXECUTE_BUTTON_Pin RESET_BUTTON_Pin */
+  GPIO_InitStruct.Pin = NEXT_ALGO_BUTTON_Pin|PREV_ALGO_BUTTON_Pin|EXECUTE_BUTTON_Pin|RESET_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -343,6 +343,12 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+	if (GPIO_Pin == RESET_BUTTON_Pin) {
+		print_uart_message("Program reset\r");
+		state_info->state_request = RESET_INTENT;
+		return;
+	}
+
 	if (state_info->current_state != CHOOSE_ALGO) {
 		return;
 	}
@@ -355,9 +361,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		set_prev_algo(state_info);
 		break;
 	case EXECUTE_BUTTON_Pin:
+		HAL_UART_AbortReceive_IT(&huart2);
 		state_info->state_request = EXECUTE;
 		break;
 	default:
+		print_uart_message("this shouldn't happen\r");
 		break;
 	}
 }
@@ -365,7 +373,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if (state_info->current_state == ENTER_SUM) {
 		if (is_checksum_end()) {
-			HAL_UART_AbortReceive(&huart2);
+			HAL_UART_AbortReceive_IT(&huart2);
 			print_uart_message(CHOOSE_ALGO_MSG);
 		}
 	} else if (state_info->current_state == CHOOSE_ALGO) {

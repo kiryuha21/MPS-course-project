@@ -15,6 +15,7 @@ typedef enum STATE {
 	ENTER_SUM,
 	CHOOSE_ALGO,
 	EXECUTE,
+	RESET_INTENT
 } STATE;
 
 static const char* algorithms[] = {
@@ -33,7 +34,7 @@ typedef struct state_info_t {
 
 	int uart_write_ptr;
 	char uart_buffer[DEFAULT_BUFFER_SIZE];
-	char reference_checksum[DEFAULT_BUFFER_SIZE];
+	char reference_checksum[MAX_CRC_LEN];
 
 	sd_card_t* sd_card;
 } state_info_t;

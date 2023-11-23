@@ -5,7 +5,7 @@
 #include "Algorithms/md5.h"
 #include "utils.h"
 
-#define MAX_CRC_LEN 16
+#define MAX_CRC_LEN 32
 
 extern CRC_HandleTypeDef hcrc;
 
@@ -19,7 +19,7 @@ typedef struct algorithm_ctx {
 	ALGORITHM algorithm;
 	MD5Context md5ctx;
 
-	unsigned int current_value;
+	uint32_t current_value;
 	char result[MAX_CRC_LEN];
 } algorithm_ctx_t;
 
