@@ -24,7 +24,7 @@ void mount_sd_card(sd_card_t* sd_card) {
 		return;
 	}
 
-	print_uart_message("successful mount...\r");
+	// print_uart_message("successful mount...\r");
 }
 
 FRESULT hash_next_file(

@@ -20,7 +20,7 @@ typedef struct algorithm_ctx {
 	MD5Context md5ctx;
 
 	uint32_t current_value;
-	char result[MAX_CRC_LEN];
+	char result[MAX_CRC_LEN + 1];
 } algorithm_ctx_t;
 
 algorithm_ctx_t* new_algorithm_context();

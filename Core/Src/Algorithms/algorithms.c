@@ -3,7 +3,7 @@
 algorithm_ctx_t* new_algorithm_context() {
 	algorithm_ctx_t* ctx = calloc(1, sizeof(algorithm_ctx_t));
 	ctx->current_value = 0;
-	clear_buffer(ctx->result, MAX_CRC_LEN);
+	clear_buffer(ctx->result, MAX_CRC_LEN + 1);
 	return ctx;
 }
 

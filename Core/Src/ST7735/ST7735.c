@@ -264,20 +264,3 @@ void ST7735_DrawTouchGFX(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const u
   ST7735_WriteData((uint8_t*) &colorBytes, size * 2);
     TFT_CS_H();
 }
-
-void ST7735_InvertColors(bool invert)
-{
-  TFT_CS_L();
-    ST7735_WriteCommand(invert ? ST7735_INVON : ST7735_INVOFF);
-    TFT_CS_H();
-}
-
-int16_t ST7735_GetHeight(void)
-{
-  return _height;
-}
-
-int16_t ST7735_GetWidth(void)
-{
-  return _width;
-}

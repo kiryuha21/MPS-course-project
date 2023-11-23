@@ -23,7 +23,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "state.h"
-#include "SD-Card/sd_card_interaction.h"
 //#include "cmox_crypto.h"
 /* USER CODE END Includes */
 
@@ -62,9 +61,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_CRC_Init(void);
 /* USER CODE BEGIN PFP */
-void print_uart_message(char* format, ...);
 void get_uart_input();
-bool is_checksum_end();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -109,7 +106,7 @@ int main(void)
   ST7735_Init();
 
   state_info = new_state_info();
-  state_info->state_request = ENTER_SUM;
+  state_info->state_request = CHOOSE_ALGO;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -326,8 +323,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NEXT_ALGO_BUTTON_Pin PREV_ALGO_BUTTON_Pin EXECUTE_BUTTON_Pin RESET_BUTTON_Pin */
-  GPIO_InitStruct.Pin = NEXT_ALGO_BUTTON_Pin|PREV_ALGO_BUTTON_Pin|EXECUTE_BUTTON_Pin|RESET_BUTTON_Pin;
+  /*Configure GPIO pins : NEXT_ALGO_BUTTON_Pin PREV_ALGO_BUTTON_Pin SUBMIT_BUTTON_Pin RESET_BUTTON_Pin */
+  GPIO_InitStruct.Pin = NEXT_ALGO_BUTTON_Pin|PREV_ALGO_BUTTON_Pin|SUBMIT_BUTTON_Pin|RESET_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -360,9 +357,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	case PREV_ALGO_BUTTON_Pin:
 		set_prev_algo(state_info);
 		break;
-	case EXECUTE_BUTTON_Pin:
+	case SUBMIT_BUTTON_Pin:
 		HAL_UART_AbortReceive_IT(&huart2);
-		state_info->state_request = EXECUTE;
+		state_info->state_request = ENTER_SUM;
 		break;
 	default:
 		print_uart_message("this shouldn't happen\r");
@@ -372,10 +369,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if (state_info->current_state == ENTER_SUM) {
-		if (is_checksum_end()) {
-			HAL_UART_AbortReceive_IT(&huart2);
-			print_uart_message(CHOOSE_ALGO_MSG);
-		}
+		strcpy(state_info->reference_checksum, state_info->uart_buffer);
+		format_reference_checksum(state_info);
+		clear_buffer(state_info->uart_buffer, DEFAULT_BUFFER_SIZE);
+		state_info->state_request = EXECUTE;
 	} else if (state_info->current_state == CHOOSE_ALGO) {
 		if (strcmp(state_info->uart_buffer, "NEXT\r") == 0) {
 			set_next_algo(state_info);
@@ -384,30 +381,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 		}
 		print_uart_message(CHOOSE_ALGO_MSG);
 	}
-}
-
-bool is_checksum_end() {
-	uint8_t byte = state_info->uart_buffer[state_info->uart_write_ptr];
-
-	if (byte != '\r') {
-		state_info->uart_write_ptr += 1;
-		return false;
-	}
-
-	strcpy(state_info->reference_checksum, state_info->uart_buffer);
-	clear_buffer(state_info->uart_buffer, DEFAULT_BUFFER_SIZE);
-	state_info->uart_write_ptr = 0;
-	state_info->state_request = CHOOSE_ALGO;
-
-	return true;
-}
-
-void read_next_byte() {
-	HAL_UART_Receive_IT(
-			&huart2,
-			(uint8_t*)(state_info->uart_buffer + state_info->uart_write_ptr),
-			1
-	);
 }
 
 void read_algorithm_shift() {
@@ -419,11 +392,11 @@ void read_algorithm_shift() {
 }
 
 void get_uart_input() {
-	if (state_info->current_state == ENTER_SUM) {
-		read_next_byte();
-	} else if (state_info->current_state == CHOOSE_ALGO) {
-		read_algorithm_shift();
+	if (state_info->current_state != CHOOSE_ALGO) {
+		return;
 	}
+
+	read_algorithm_shift();
 }
 /* USER CODE END 4 */
 

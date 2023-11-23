@@ -3,7 +3,7 @@
 
 #define ALGORITHMS_COUNT 3
 #define SHIFT_WORD_SIZE 5
-#define CHOOSE_ALGO_MSG "Choose algorithm:[NEXT/PREV]"
+#define CHOOSE_ALGO_MSG "Choose algorithm[NEXT/PREV]: "
 
 #include "utils.h"
 #include "ST7735/fonts.h"
@@ -12,8 +12,8 @@
 
 typedef enum STATE {
 	IDLE,
-	ENTER_SUM,
 	CHOOSE_ALGO,
+	ENTER_SUM,
 	EXECUTE,
 	RESET_INTENT
 } STATE;
@@ -34,7 +34,7 @@ typedef struct state_info_t {
 
 	int uart_write_ptr;
 	char uart_buffer[DEFAULT_BUFFER_SIZE];
-	char reference_checksum[MAX_CRC_LEN];
+	char reference_checksum[MAX_CRC_LEN + 1];
 
 	sd_card_t* sd_card;
 } state_info_t;
@@ -50,6 +50,8 @@ void set_prev_algo(state_info_t* state_info);
 
 void reduce_state_to_action(state_info_t* state_info);
 void reduce_state_change_to_effect(state_info_t* state_info);
+
+void format_reference_checksum(state_info_t* state_info);
 
 void write_enter_sum_message(state_info_t* state_info);
 void write_algorithm_message(state_info_t* state_info);

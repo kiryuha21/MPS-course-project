@@ -13,7 +13,7 @@ state_info_t* new_state_info() {
 
 	state_info->uart_write_ptr = 0;
 	clear_buffer(state_info->uart_buffer, DEFAULT_BUFFER_SIZE);
-	clear_buffer(state_info->reference_checksum, MAX_CRC_LEN);
+	clear_buffer(state_info->reference_checksum, MAX_CRC_LEN + 1);
 
 	state_info->sd_card = new_sd_card();
 	mount_sd_card(state_info->sd_card);
@@ -27,7 +27,7 @@ void free_state_info(state_info_t* state_info) {
 }
 
 void reset_state(state_info_t* state_info) {
-	set_state(state_info, ENTER_SUM);
+	set_state(state_info, CHOOSE_ALGO);
 	reset_calculation(state_info->sd_card);
 	state_info->algorithm_index = 0;
 }
@@ -93,22 +93,46 @@ char* hash_result(state_info_t* state_info) {
 	return state_info->sd_card->algorithm_ctx->result;
 }
 
-bool checksums_equal(state_info_t* state_info) {
-	return strcmp(state_info->reference_checksum, hash_result(state_info)) == 0;
+void read_checksum(state_info_t* state_info) {
+	uint16_t bytes_to_read = (state_info->algorithm_index == 2 ? 32 : 8) + 1; // for \r
+	HAL_UART_Receive_IT(
+			&huart2,
+			(uint8_t*)state_info->uart_buffer,
+			bytes_to_read
+	);
+}
+
+void print_checksum_helper(state_info_t* state_info) {
+	uint16_t bytes_to_read = (state_info->algorithm_index == 2 ? 32 : 8);
+	print_uart_message(
+			"\r[%u-digit checksum and Enter]: ",
+			bytes_to_read
+	);
+}
+
+void format_reference_checksum(state_info_t* state_info) {
+	char* carry = strchr(state_info->reference_checksum, '\r');
+	if (carry == NULL) {
+		return;
+	}
+
+	*carry = '\0';
 }
 
 void reduce_state_change_to_effect(state_info_t* state_info) {
 	switch (state_info->current_state) {
-	case ENTER_SUM:
-		ST7735_FillScreen(ST7735_WHITE);
-		clear_buffer(state_info->output_buffer, DEFAULT_BUFFER_SIZE);
-		write_enter_sum_message(state_info);
-		print_uart_message("[checksum]:");
-		break;
 	case CHOOSE_ALGO:
 		ST7735_FillScreen(ST7735_WHITE);
 		clear_buffer(state_info->output_buffer, DEFAULT_BUFFER_SIZE);
 		write_algorithm_message(state_info);
+		print_uart_message("%s", CHOOSE_ALGO_MSG);
+		break;
+	case ENTER_SUM:
+		ST7735_FillScreen(ST7735_WHITE);
+		clear_buffer(state_info->output_buffer, DEFAULT_BUFFER_SIZE);
+		write_enter_sum_message(state_info);
+		print_checksum_helper(state_info);
+		read_checksum(state_info);
 		break;
 	case EXECUTE:
 		ST7735_FillScreen(ST7735_WHITE);
@@ -146,7 +170,7 @@ void write_algorithm_name(state_info_t* state_info) {
 
 void write_checksum_report(state_info_t* state_info) {
 	char* result = hash_result(state_info);
-	bool is_match = checksums_equal(state_info);
+	bool is_match = strcmp(state_info->reference_checksum, hash_result(state_info)) == 0;
 
 	sprintf(state_info->output_buffer, "Checksums %sequal",	is_match ? "" : "not ");
 	format_buffer(state_info->output_buffer, TERMINAL_LINE_WIDTH);
