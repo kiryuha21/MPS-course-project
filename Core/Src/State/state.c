@@ -49,7 +49,7 @@ void reduce_state_change_to_effect(state_info_t* state_info) {
 		process_execution(state_info);
 		write_checksum_report(state_info);
 		break;
-	case RESET_INTENT:
+	case RESTART_INTENT:
 		reset_state(state_info);
 		break;
 	default:

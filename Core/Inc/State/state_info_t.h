@@ -12,7 +12,7 @@ typedef enum STATE {
 	CHOOSE_ALGO,
 	ENTER_SUM,
 	EXECUTE,
-	RESET_INTENT
+	RESTART_INTENT
 } STATE;
 
 typedef struct state_info_t {

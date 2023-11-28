@@ -400,8 +400,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NEXT_ALGO_BUTTON_Pin PREV_ALGO_BUTTON_Pin SUBMIT_BUTTON_Pin RESET_BUTTON_Pin */
-  GPIO_InitStruct.Pin = NEXT_ALGO_BUTTON_Pin|PREV_ALGO_BUTTON_Pin|SUBMIT_BUTTON_Pin|RESET_BUTTON_Pin;
+  /*Configure GPIO pins : NEXT_ALGO_BUTTON_Pin PREV_ALGO_BUTTON_Pin SUBMIT_BUTTON_Pin RESTART_BUTTON_Pin */
+  GPIO_InitStruct.Pin = NEXT_ALGO_BUTTON_Pin|PREV_ALGO_BUTTON_Pin|SUBMIT_BUTTON_Pin|RESTART_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -417,9 +417,9 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if (GPIO_Pin == RESET_BUTTON_Pin) {
+	if (GPIO_Pin == RESTART_BUTTON_Pin) {
 		print_uart_message("Program reset\r");
-		state_info->state_request = RESET_INTENT;
+		state_info->state_request = RESTART_INTENT;
 		return;
 	}
 
