@@ -64,7 +64,6 @@ FRESULT calculate_checksum(sd_card_t* sd_card) {
 		return fres;
 	}
 
-	// print_callback("\ropened %s", path);
 	while (true) {
 		fres = f_readdir(&directory, &sd_card->file_info);
 		if (fres != FR_OK) {
@@ -73,7 +72,6 @@ FRESULT calculate_checksum(sd_card_t* sd_card) {
 		}
 
 		if (sd_card->file_info.fname[0] == 0) {
-			// print_callback("\rend of directory!");
 			break;
 		}
 
