@@ -50,9 +50,9 @@ ALGORITHM get_algo_from_index(int algorithm_index) {
 }
 
 void make_error_sound() {
-	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_Delay(1000);
-	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
 }
 
 

@@ -4,7 +4,7 @@
 #include "State/state_info_t.h"
 #include "Algorithms/algorithms.h"
 
-extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim2;
 
 void process_execution(state_info_t* state_info);
 char* extract_result(state_info_t* state_info);
