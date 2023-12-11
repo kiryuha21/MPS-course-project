@@ -190,34 +190,3 @@ void md5Step(uint32_t *buffer, uint32_t *input){
     buffer[2] += CC;
     buffer[3] += DD;
 }
-
-/*
- * Functions that run the algorithm on the provided input and put the digest into result.
- * result should be able to store 16 bytes.
- */
-void md5String(char *input, uint8_t *result){
-    MD5Context ctx;
-    md5Init(&ctx);
-    md5Update(&ctx, (uint8_t *)input, strlen(input));
-    md5Finalize(&ctx);
-
-    memcpy(result, ctx.digest, 16);
-}
-
-void md5File(FILE *file, uint8_t *result){
-    char *input_buffer = malloc(1024);
-    size_t input_size = 0;
-
-    MD5Context ctx;
-    md5Init(&ctx);
-
-    while((input_size = fread(input_buffer, 1, 1024, file)) > 0){
-        md5Update(&ctx, (uint8_t *)input_buffer, input_size);
-    }
-
-    md5Finalize(&ctx);
-
-    free(input_buffer);
-
-    memcpy(result, ctx.digest, 16);
-}

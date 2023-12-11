@@ -409,7 +409,7 @@ static void MX_GPIO_Init(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == RESTART_BUTTON_Pin) {
-		print_uart_message("Program reset\r");
+		print_uart_message("Program restart\r");
 		state_info->state_request = RESTART_INTENT;
 		return;
 	}
@@ -426,7 +426,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		set_prev_algo(state_info);
 		break;
 	case SUBMIT_BUTTON_Pin:
-		HAL_UART_AbortReceive_IT(&huart2);
+		HAL_UART_AbortReceive(&huart2);
 		state_info->state_request = ENTER_SUM;
 		break;
 	default:
